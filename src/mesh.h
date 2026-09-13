@@ -11,6 +11,7 @@ typedef struct {
 } Mesh;
 
 Mesh cube_mesh_create(void);
+Mesh floor_mesh_create(void);
 void mesh_delete(Mesh mesh);
 
 #endif
