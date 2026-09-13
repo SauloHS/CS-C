@@ -5,7 +5,7 @@
 
 GLuint texture_create(const char *path) {
   int width, height, channels;
-  stbi_set_flip_vertically_on_load(1);
+  stbi_set_flip_vertically_on_load(0);
   unsigned char *data = stbi_load(path, &width, &height, &channels, 0);
 
   if (!data) {

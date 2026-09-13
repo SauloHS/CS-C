@@ -14,13 +14,18 @@ typedef struct {
   float pitch;
   float lastX, lastY;
   int firstMouse;
+
+  float velocityY;
+  int onGround;
+  int isCrouching;
+  float crouchOffset;
 } Camera;
 
 Camera camera_create(void);
 void camera_get_view_matrix(Camera *cam, mat4 dest);
 void camera_process_mouse(Camera *cam, double xpos, double ypos);
 void camera_process_keyboard(Camera *cam, GLFWwindow *window, float deltaTime,
-                             AABB *sceneBounds, int sceneCount);
+                             CollisionMesh *scene, int sceneCount);
 AABB camera_get_aabb(Camera *cam);
 
 #endif
