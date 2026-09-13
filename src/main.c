@@ -5,6 +5,7 @@
 #include "mesh.h"
 #include "scene.h"
 #include "shader.h"
+#include "texture.h"
 #include "window.h"
 #include <GLFW/glfw3.h>
 #include <cglm/cglm.h>
@@ -30,14 +31,19 @@ int main(void) {
 
   GLuint shaderProgram =
       shader_program_create("shaders/unlit.vert", "shaders/unlit.frag");
+  GLuint cubeTexture = texture_create("textures/brick.png");
 
   GLint modelLoc = glGetUniformLocation(shaderProgram, "model");
   GLint viewLoc = glGetUniformLocation(shaderProgram, "view");
   GLint projLoc = glGetUniformLocation(shaderProgram, "projection");
-
-  SceneObject objects[] = {{.mesh = cube_mesh_create(),
-                            .position = {0.0f, 0.0f, -3.0f},
-                            .rotationY = 30.0f}};
+  SceneObject objects[] = {
+      {.mesh = cube_mesh_create(),
+       .position = {0.0f, 0.0f, -3.0f},
+       .rotationY = 30.0f},
+      {.mesh = floor_mesh_create(),
+       .position = {0.0f, -10.0f, 0.0f},
+       .rotationY = 0.0f},
+  };
   int objectCount = sizeof(objects) / sizeof(SceneObject);
 
   AABB sceneBounds[objectCount];
@@ -74,6 +80,10 @@ int main(void) {
 
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, (float *)view);
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, (float *)projection);
+    glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, cubeTexture);
 
     for (int i = 0; i < objectCount; i++) {
       mat4 objModel;
