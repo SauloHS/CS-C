@@ -3,6 +3,7 @@
 #include "camera.h"
 #include "collision.h"
 #include "mesh.h"
+#include "scene.h"
 #include "shader.h"
 #include "window.h"
 #include <GLFW/glfw3.h>
@@ -34,21 +35,22 @@ int main(void) {
   GLint viewLoc = glGetUniformLocation(shaderProgram, "view");
   GLint projLoc = glGetUniformLocation(shaderProgram, "projection");
 
-  Mesh mesh = cube_mesh_create();
-  AABB sceneBounds[] = {mesh.bounds};
-  int sceneCount = 1;
+  SceneObject objects[] = {{.mesh = cube_mesh_create(),
+                            .position = {0.0f, 0.0f, -3.0f},
+                            .rotationY = 30.0f}};
+  int objectCount = sizeof(objects) / sizeof(SceneObject);
+
+  AABB sceneBounds[objectCount];
+  for (int i = 0; i < objectCount; i++) {
+    sceneBounds[i] = objects[i].mesh.bounds;
+  }
+  int sceneCount = objectCount;
+
   Camera camera = camera_create();
   glfwSetWindowUserPointer(window, &camera);
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   glfwSetCursorPosCallback(window, mouse_callback);
 
-  // Model matrix
-  mat4 model;
-  glm_mat4_identity(model);
-  glm_translate(model, (vec3){0.0f, 0.0f, -3.0f});
-  glm_rotate(model, glm_rad(30.0f), (vec3){0.0f, 1.0f, 0.0f});
-
-  // Projection matrix
   mat4 projection;
   glm_perspective(glm_rad(45.0f), 800.0f / 600.0f, 0.1f, 100.0f, projection);
 
@@ -70,18 +72,25 @@ int main(void) {
     mat4 view;
     camera_get_view_matrix(&camera, view);
 
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float *)model);
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, (float *)view);
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, (float *)projection);
 
-    glBindVertexArray(mesh.VAO);
-    glDrawElements(GL_TRIANGLES, mesh.count, GL_UNSIGNED_INT, 0);
+    for (int i = 0; i < objectCount; i++) {
+      mat4 objModel;
+      scene_object_get_model(&objects[i], objModel);
+      glUniformMatrix4fv(modelLoc, 1, GL_FALSE, (float *)objModel);
+
+      glBindVertexArray(objects[i].mesh.VAO);
+      glDrawElements(GL_TRIANGLES, objects[i].mesh.count, GL_UNSIGNED_INT, 0);
+    }
 
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
 
-  mesh_delete(mesh);
+  for (int i = 0; i < objectCount; i++) {
+    mesh_delete(objects[i].mesh);
+  }
   glDeleteProgram(shaderProgram);
 
   glfwTerminate();
