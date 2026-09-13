@@ -77,6 +77,10 @@ Mesh cube_mesh_create(void) {
   glBindVertexArray(0);
 
   mesh.count = sizeof(index) / sizeof(GLuint);
+
+  // temporary; real bounds will come from Blender
+  glm_vec3_copy((vec3){-0.5f, -0.5f, -3.5f}, mesh.bounds.min);
+  glm_vec3_copy((vec3){0.5f, 0.5f, -2.5f}, mesh.bounds.max);
   return mesh;
 }
 

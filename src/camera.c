@@ -29,7 +29,21 @@ Camera camera_create(void) {
 
   return cam;
 }
+AABB camera_get_aabb(Camera *cam) {
+  AABB box;
+  float halfWidth = 0.3f;
+  float halfHeight = 0.9f;
 
+  box.min[0] = cam->position[0] - halfWidth;
+  box.min[1] = cam->position[1] - halfHeight;
+  box.min[2] = cam->position[2] - halfWidth;
+
+  box.max[0] = cam->position[0] + halfWidth;
+  box.max[1] = cam->position[1] + halfHeight;
+  box.max[2] = cam->position[2] + halfWidth;
+
+  return box;
+}
 // Calculate camera view matrix and put it on dest
 void camera_get_view_matrix(Camera *cam, mat4 dest) {
   vec3 center;
@@ -73,33 +87,41 @@ void camera_process_mouse(Camera *cam, double xpos, double ypos) {
   camera_update_vectors(cam);
 }
 
-void camera_process_keyboard(Camera *cam, GLFWwindow *window, float deltaTime) {
+void camera_process_keyboard(Camera *cam, GLFWwindow *window, float deltaTime,
+                             AABB *sceneBounds, int sceneCount) {
   float velocity = 2.5f * deltaTime;
 
   vec3 right;
   glm_vec3_cross(cam->front, cam->up, right);
   glm_vec3_normalize(right);
 
-  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-    vec3 move;
-    glm_vec3_scale(cam->front, velocity, move);
-    glm_vec3_add(cam->position, move, cam->position);
+  vec3 move = {0.0f, 0.0f, 0.0f};
+
+  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    glm_vec3_muladds(cam->front, velocity, move);
+  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    glm_vec3_muladds(cam->front, -velocity, move);
+  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    glm_vec3_muladds(right, velocity, move);
+  if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    glm_vec3_muladds(right, -velocity, move);
+
+  vec3 newPos;
+  glm_vec3_add(cam->position, move, newPos);
+
+  Camera testCam = *cam;
+  glm_vec3_copy(newPos, testCam.position);
+  AABB playerBox = camera_get_aabb(&testCam);
+
+  bool blocked = false;
+  for (int i = 0; i < sceneCount; i++) {
+    if (aabb_intersect(playerBox, sceneBounds[i])) {
+      blocked = true;
+      break;
+    }
   }
 
-  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-    vec3 move;
-    glm_vec3_scale(cam->front, velocity, move);
-    glm_vec3_sub(cam->position, move, cam->position);
-  }
-
-  if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-    vec3 move;
-    glm_vec3_scale(right, velocity, move);
-    glm_vec3_sub(cam->position, move, cam->position);
-  }
-  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-    vec3 move;
-    glm_vec3_scale(right, velocity, move);
-    glm_vec3_add(cam->position, move, cam->position);
+  if (!blocked) {
+    glm_vec3_copy(newPos, cam->position);
   }
 }

@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 
 #include "camera.h"
+#include "collision.h"
 #include "mesh.h"
 #include "shader.h"
 #include "window.h"
@@ -34,6 +35,8 @@ int main(void) {
   GLint projLoc = glGetUniformLocation(shaderProgram, "projection");
 
   Mesh mesh = cube_mesh_create();
+  AABB sceneBounds[] = {mesh.bounds};
+  int sceneCount = 1;
   Camera camera = camera_create();
   glfwSetWindowUserPointer(window, &camera);
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -61,7 +64,8 @@ int main(void) {
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
 
-    camera_process_keyboard(&camera, window, deltaTime);
+    camera_process_keyboard(&camera, window, deltaTime, sceneBounds,
+                            sceneCount);
 
     mat4 view;
     camera_get_view_matrix(&camera, view);

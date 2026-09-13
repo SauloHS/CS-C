@@ -3,11 +3,14 @@
 
 #include <glad/glad.h>
 
+#include "collision.h"
+
 typedef struct {
   GLuint VAO;
   GLuint VBO;
   GLuint EBO;
   GLuint count;
+  AABB bounds;
 } Mesh;
 
 Mesh cube_mesh_create(void);
